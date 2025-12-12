@@ -71,12 +71,15 @@ Your backend should return orders in this format:
 
 ```json
 [{
-  "ID": 67,
+  "ID": 1,
   "groupID": 42,
+  "id": 1,
   "isDone": false,
+  "modifyType": "mains",
   "orders": [
     {
       "id": 101,
+      "originalID": 1,
       "name": "Pizza Margherita",
       "orderedAt": "2025-12-11T12:34:56",
       "quantity": 2,
@@ -84,18 +87,19 @@ Your backend should return orders in this format:
       "specialInstructions": "Extra cheese",
       "comments": "",
       "activeTime": 5,
-      "idleTime": 15
+      "waitingTime": 15
     }
   ]
 }]
 ```
 
 **Important Fields:**
-- `modifiedType`: **REQUIRED** - Course type ("rush", "appetizer", "main", "dessert")
+- `modifyType`: **REQUIRED** - Course type ("rush", "appetizer", "mains", "dessert")
 - `activeTime`: Minutes for active preparation (chopping, mixing, etc.)
-- `idleTime`: Minutes for passive cooking (baking, grilling, etc.)
-- `orderedAt`: ISO 8601 timestamp
+- `waitingTime`: Minutes for passive cooking/waiting (in minutes)
+- `orderedAt`: ISO 8601 timestamp (ISO format)
 - `groupID`: Links multiple bundles to same table
+- `originalID`: Original dish ID from backend
 
 ## Project Structure
 
@@ -131,7 +135,7 @@ app/src/main/java/com/miun/restaurantchefapp/
 2. Pizza start: 12:20 - 20 min = **12:00 PM** (START NOW!)
 3. Salad start: 12:20 - 8 min = **12:12 PM** (Start in 12 min)
 
-Both finish at 12:20 PM together!
+Both finish at 12:20 PM together
 
 ### Priority Formula
 
@@ -147,26 +151,8 @@ Course type dominates all other factors:
 - Main: 2 × 1000 = **2000**
 - Dessert: 3 × 1000 = **3000**
 
-## Building the Project
-
-1. **Sync Gradle**: Let Android Studio download dependencies
-2. **Build**: `./gradlew build` or use Android Studio
-3. **Run**: Deploy to emulator or device
-
 ## Next Steps
 
-1. **Connect to Backend**: Implement API calls to your Payara server
+1. **Connect to Backend**: Implement API calls to Payara server
 2. **Create UI**: Build RecyclerView to display priority list (see EXAMPLE_USAGE.md)
 3. **Add Actions**: Implement "Start Cooking" and "Mark Complete" buttons
-4. **Real-time Updates**: Add WebSocket or polling for live order updates
-5. **Notifications**: Alert chef when dishes need to start
-
-## Team Notes
-
-- **Backend Team**: Please ensure `activeTime` and `idleTime` are included in order JSON
-- **This handles**: Order prioritization, scheduling, display logic
-- **Backend handles**: Order receipt, database, chef status updates
-
-## License
-
-School Project - 2025
