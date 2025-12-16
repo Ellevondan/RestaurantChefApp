@@ -1,5 +1,6 @@
 package com.miun.restaurantchefapp;
 
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -94,7 +95,10 @@ public class MainActivity extends AppCompatActivity {
      */
     private List<OrderBundle> generateMockOrderBundles() {
         List<OrderBundle> bundles = new ArrayList<>();
-        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime now = null;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            now = LocalDateTime.now();
+        }
 
         // --- Bundle 1: Main Course (Needs to start soon) ---
         OrderBundle b1 = new OrderBundle();
@@ -106,7 +110,9 @@ public class MainActivity extends AppCompatActivity {
         d1.setSpecialInstructions("Medium Rare");
         d1.setActiveTime(15);
         d1.setWaitingTime(5);
-        d1.setOrderedAt(now.minusMinutes(10));
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            d1.setOrderedAt(now.minusMinutes(10));
+        }
 
         List<Dish> orders1 = new ArrayList<>();
         orders1.add(d1);
@@ -122,7 +128,9 @@ public class MainActivity extends AppCompatActivity {
         d2.setName("Quick Soup");
         d2.setActiveTime(5);
         d2.setWaitingTime(0);
-        d2.setOrderedAt(now.minusMinutes(2));
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            d2.setOrderedAt(now.minusMinutes(2));
+        }
 
         List<Dish> orders2 = new ArrayList<>();
         orders2.add(d2);

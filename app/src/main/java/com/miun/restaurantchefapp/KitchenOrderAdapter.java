@@ -1,6 +1,7 @@
 package com.miun.restaurantchefapp;
 
 import android.graphics.Color;
+import android.os.Build;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -70,13 +71,19 @@ public class KitchenOrderAdapter extends RecyclerView.Adapter<KitchenOrderAdapte
         }
 
         // Add timing status from Scheduler logic
-        String timingStatus = DishPriorityScheduler.getStartTimingStatus(dish, LocalDateTime.now());
+        String timingStatus = null;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            timingStatus = DishPriorityScheduler.getStartTimingStatus(dish, LocalDateTime.now());
+        }
         instructions.append("• Timing: ").append(timingStatus);
 
         holder.tvInstructions.setText(instructions.toString());
 
         // 5. Dynamic Styling based on Scheduler Priority/Timing
-        String statusColor = DishPriorityScheduler.getTimingStatusColor(dish, LocalDateTime.now());
+        String statusColor = null;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            statusColor = DishPriorityScheduler.getTimingStatusColor(dish, LocalDateTime.now());
+        }
         applyStatusColor(holder, statusColor);
 
         // 6. Handle Done Button
