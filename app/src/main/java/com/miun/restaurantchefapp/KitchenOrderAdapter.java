@@ -1,4 +1,3 @@
-//The Adapter is the engine that powers the RecyclerView
 package com.miun.restaurantchefapp;
 
 import android.graphics.Color;
@@ -26,23 +25,15 @@ public class KitchenOrderAdapter extends RecyclerView.Adapter<KitchenOrderAdapte
     private final List<PrioritizedDish> prioritizedDishes;
 
     public KitchenOrderAdapter(List<PrioritizedDish> prioritizedDishes) {
-        // Create a copy of the list to avoid external modification issues
         this.prioritizedDishes = new ArrayList<>(prioritizedDishes);
     }
 
-    /**
-     * Updates the list of dishes and notifies the recycler view.
-     * Call this when the priority schedule updates (e.g. every minute).
-     * A helper method we added to swap the data list safely and tell
-     * the UI to repaint (notifyDataSetChanged).
-     */
     public void updateData(List<PrioritizedDish> newDishes) {
         this.prioritizedDishes.clear();
         this.prioritizedDishes.addAll(newDishes);
         notifyDataSetChanged();
     }
 
-    //loads the XML layout for a single row and creates a Java object to hold references to it.
     @NonNull
     @Override
     public OrderViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
@@ -51,56 +42,46 @@ public class KitchenOrderAdapter extends RecyclerView.Adapter<KitchenOrderAdapte
         return new OrderViewHolder(view);
     }
 
-    /**
-    *the most critical loop. It runs every time a row needs to appear on screen.
-    *1-It takes a PrioritizedDish object from your list.
-    *2-It finds the corresponding UI widgets (using the View Holder).
-    *3-It sets the text (setText) and changes colors (setBackgroundColor).
-    */
     @Override
     public void onBindViewHolder(@NonNull OrderViewHolder holder, int position) {
         PrioritizedDish item = prioritizedDishes.get(position);
         Dish dish = item.getDish();
+        int tableId = item.getParentBundle().getGroupID();
 
-        // 1. Bind Table Number
-        holder.tvTableNumber.setText("TABLE " + item.getParentBundle().getGroupID());
-
-        // 2. Bind Course Type
+        // 1. Bind Header Info (Table & Type)
+        holder.tvTableNumber.setText("TABLE " + tableId);
         holder.tvCourseType.setText(item.getParentBundle().getCourseType().getDisplayName().toUpperCase());
+
+        // 2. Set Header Color based on Table ID (Critique #1)
+        applyTableColor(holder, tableId);
 
         // 3. Bind Dish Name
         holder.tvDishName.setText(dish.getName());
 
-        // 4. Bind Instructions (Combine allergens and special instructions)
-        StringBuilder instructions = new StringBuilder();
-        if (dish.getSpecialInstructions() != null && !dish.getSpecialInstructions().isEmpty()) {
-            instructions.append("• ").append(dish.getSpecialInstructions()).append("\n");
-        }
-        if (dish.getSelectedAllergens() != null && !dish.getSelectedAllergens().isEmpty()) {
-            instructions.append("• Allergies: ").append(dish.getSelectedAllergens()).append("\n");
-        }
+        // 4. Bind Extra Info (Allergens, Instructions, Timing)
+        StringBuilder details = new StringBuilder();
 
-        // Add timing status safely
+        // Timing (Critique #3 - keeping timing info as it's useful "extra info")
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             String timingStatus = DishPriorityScheduler.getStartTimingStatus(dish, LocalDateTime.now());
             if (timingStatus != null) {
-                instructions.append("• Timing: ").append(timingStatus);
+                details.append("⏱️ ").append(timingStatus).append("\n");
             }
         }
 
-        holder.tvInstructions.setText(instructions.toString());
-
-        // 5. Dynamic Styling (Fixes potential NullPointerException)
-        String statusColor = "normal"; // Default value
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            String calculatedColor = DishPriorityScheduler.getTimingStatusColor(dish, LocalDateTime.now());
-            if (calculatedColor != null) {
-                statusColor = calculatedColor;
-            }
+        // Special Instructions
+        if (dish.getSpecialInstructions() != null && !dish.getSpecialInstructions().isEmpty()) {
+            details.append("📝 ").append(dish.getSpecialInstructions()).append("\n");
         }
-        applyStatusColor(holder, statusColor);
 
-        // 6. Handle Done Button
+        // Allergens
+        if (dish.getSelectedAllergens() != null && !dish.getSelectedAllergens().isEmpty()) {
+            details.append("⚠️ Allergies: ").append(dish.getSelectedAllergens()).append("\n");
+        }
+
+        holder.tvInstructions.setText(details.toString());
+
+        // 5. Handle Done Button
         holder.btnDone.setOnClickListener(v -> {
             dish.setDone(true);
             int currentPos = holder.getAdapterPosition();
@@ -111,21 +92,17 @@ public class KitchenOrderAdapter extends RecyclerView.Adapter<KitchenOrderAdapte
         });
     }
 
-    private void applyStatusColor(OrderViewHolder holder, String status) {
-        // Safe check for null, though we set a default above
-        if (status == null) status = "normal";
+    /**
+     * Generates a unique-ish color for a given table ID so all items
+     * for that table look visually distinct.
+     */
+    private void applyTableColor(OrderViewHolder holder, int tableId) {
+        // Use a Golden Angle approximation to generate distinct colors for numbers 1, 2, 3...
+        // This ensures Table 1 is always one color, Table 2 another, etc.
+        float hue = (tableId * 137.508f) % 360;
+        int color = Color.HSVToColor(new float[]{hue, 0.6f, 0.85f});
 
-        switch (status) {
-            case "urgent":
-                holder.headerContainer.setBackgroundColor(Color.parseColor("#D32F2F")); // Red
-                break;
-            case "soon":
-                holder.headerContainer.setBackgroundColor(Color.parseColor("#FBC02D")); // Yellow
-                break;
-            default:
-                holder.headerContainer.setBackgroundColor(Color.parseColor("#800880")); // Default Purple
-                break;
-        }
+        holder.headerContainer.setBackgroundColor(color);
     }
 
     @Override
