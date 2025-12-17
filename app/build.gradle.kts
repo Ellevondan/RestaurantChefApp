@@ -1,3 +1,4 @@
+//edited after feature/UI2
 plugins {
     alias(libs.plugins.android.application)
 }

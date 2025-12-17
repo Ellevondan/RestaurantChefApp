@@ -1,3 +1,4 @@
+//he Adapter is the engine that powers the RecyclerView
 package com.miun.restaurantchefapp;
 
 import android.graphics.Color;
@@ -52,7 +53,7 @@ public class KitchenOrderAdapter extends RecyclerView.Adapter<KitchenOrderAdapte
         holder.tvTableNumber.setText("TABLE " + tableId);
         holder.tvCourseType.setText(item.getParentBundle().getCourseType().getDisplayName().toUpperCase());
 
-        // 2. Set Header Color based on Table ID (Critique #1)
+        // 2. Set Header Color based on Table ID
         applyTableColor(holder, tableId);
 
         // 3. Bind Dish Name
@@ -61,7 +62,7 @@ public class KitchenOrderAdapter extends RecyclerView.Adapter<KitchenOrderAdapte
         // 4. Bind Extra Info (Allergens, Instructions, Timing)
         StringBuilder details = new StringBuilder();
 
-        // Timing (Critique #3 - keeping timing info as it's useful "extra info")
+        // Timing
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             String timingStatus = DishPriorityScheduler.getStartTimingStatus(dish, LocalDateTime.now());
             if (timingStatus != null) {
@@ -92,10 +93,8 @@ public class KitchenOrderAdapter extends RecyclerView.Adapter<KitchenOrderAdapte
         });
     }
 
-    /**
-     * Generates a unique-ish color for a given table ID so all items
-     * for that table look visually distinct.
-     */
+
+     //Generates a unique color for a given table ID so all items
     private void applyTableColor(OrderViewHolder holder, int tableId) {
         // Use a Golden Angle approximation to generate distinct colors for numbers 1, 2, 3...
         // This ensures Table 1 is always one color, Table 2 another, etc.

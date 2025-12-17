@@ -1,3 +1,4 @@
+//test data isolated.
 package com.miun.restaurantchefapp.utils;
 
 import android.annotation.SuppressLint;
@@ -11,13 +12,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MockJsonResponse {
-
-    // Suppress the "NewApi" warning because we enabled Library Desugaring in build.gradle
     @SuppressLint("NewApi")
     public static List<OrderBundle> getMockData() {
         List<OrderBundle> bundles = new ArrayList<>();
 
-        // We can now safely use LocalDateTime because of desugaring
         LocalDateTime now = LocalDateTime.now();
 
         // --- TABLE 1 (Rush Order) ---
@@ -48,7 +46,7 @@ public class MockJsonResponse {
         d2.setSpecialInstructions("Sauce on side");
         d2.setActiveTime(12);
         d2.setWaitingTime(5);
-        d2.setOrderedAt(now.minusMinutes(15)); // Ordered 15 min ago
+        d2.setOrderedAt(now.minusMinutes(15));
 
         Dish d3 = new Dish();
         d3.setName("Caesar Salad");
