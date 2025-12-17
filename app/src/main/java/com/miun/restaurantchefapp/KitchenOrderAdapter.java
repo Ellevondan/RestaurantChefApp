@@ -1,3 +1,4 @@
+//The Adapter is the engine that powers the RecyclerView
 package com.miun.restaurantchefapp;
 
 import android.graphics.Color;
@@ -32,6 +33,8 @@ public class KitchenOrderAdapter extends RecyclerView.Adapter<KitchenOrderAdapte
     /**
      * Updates the list of dishes and notifies the recycler view.
      * Call this when the priority schedule updates (e.g. every minute).
+     * A helper method we added to swap the data list safely and tell
+     * the UI to repaint (notifyDataSetChanged).
      */
     public void updateData(List<PrioritizedDish> newDishes) {
         this.prioritizedDishes.clear();
@@ -39,6 +42,7 @@ public class KitchenOrderAdapter extends RecyclerView.Adapter<KitchenOrderAdapte
         notifyDataSetChanged();
     }
 
+    //loads the XML layout for a single row and creates a Java object to hold references to it.
     @NonNull
     @Override
     public OrderViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
@@ -47,12 +51,18 @@ public class KitchenOrderAdapter extends RecyclerView.Adapter<KitchenOrderAdapte
         return new OrderViewHolder(view);
     }
 
+    /**
+    *the most critical loop. It runs every time a row needs to appear on screen.
+    *1-It takes a PrioritizedDish object from your list.
+    *2-It finds the corresponding UI widgets (using the View Holder).
+    *3-It sets the text (setText) and changes colors (setBackgroundColor).
+    */
     @Override
     public void onBindViewHolder(@NonNull OrderViewHolder holder, int position) {
         PrioritizedDish item = prioritizedDishes.get(position);
         Dish dish = item.getDish();
 
-        // 1. Bind Table Number (using GroupID as Table ID for this demo)
+        // 1. Bind Table Number
         holder.tvTableNumber.setText("TABLE " + item.getParentBundle().getGroupID());
 
         // 2. Bind Course Type
@@ -70,25 +80,28 @@ public class KitchenOrderAdapter extends RecyclerView.Adapter<KitchenOrderAdapte
             instructions.append("• Allergies: ").append(dish.getSelectedAllergens()).append("\n");
         }
 
-        // Add timing status from Scheduler logic
-        String timingStatus = null;
+        // Add timing status safely
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            timingStatus = DishPriorityScheduler.getStartTimingStatus(dish, LocalDateTime.now());
+            String timingStatus = DishPriorityScheduler.getStartTimingStatus(dish, LocalDateTime.now());
+            if (timingStatus != null) {
+                instructions.append("• Timing: ").append(timingStatus);
+            }
         }
-        instructions.append("• Timing: ").append(timingStatus);
 
         holder.tvInstructions.setText(instructions.toString());
 
-        // 5. Dynamic Styling based on Scheduler Priority/Timing
-        String statusColor = null;
+        // 5. Dynamic Styling (Fixes potential NullPointerException)
+        String statusColor = "normal"; // Default value
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            statusColor = DishPriorityScheduler.getTimingStatusColor(dish, LocalDateTime.now());
+            String calculatedColor = DishPriorityScheduler.getTimingStatusColor(dish, LocalDateTime.now());
+            if (calculatedColor != null) {
+                statusColor = calculatedColor;
+            }
         }
         applyStatusColor(holder, statusColor);
 
         // 6. Handle Done Button
         holder.btnDone.setOnClickListener(v -> {
-            // In a real app, this would notify the backend
             dish.setDone(true);
             int currentPos = holder.getAdapterPosition();
             if (currentPos != RecyclerView.NO_POSITION) {
@@ -99,7 +112,9 @@ public class KitchenOrderAdapter extends RecyclerView.Adapter<KitchenOrderAdapte
     }
 
     private void applyStatusColor(OrderViewHolder holder, String status) {
-        // Customize colors based on the status returned by the Scheduler
+        // Safe check for null, though we set a default above
+        if (status == null) status = "normal";
+
         switch (status) {
             case "urgent":
                 holder.headerContainer.setBackgroundColor(Color.parseColor("#D32F2F")); // Red

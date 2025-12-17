@@ -1,3 +1,4 @@
+//main logic
 package com.miun.restaurantchefapp;
 
 import android.os.Build;
@@ -24,7 +25,6 @@ import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
-    private RecyclerView recyclerView;
     private KitchenOrderAdapter adapter;
     private List<OrderBundle> activeBundles; // Store the raw bundles here
 
@@ -50,7 +50,7 @@ public class MainActivity extends AppCompatActivity {
 
 
         // 1. Setup RecyclerView
-        recyclerView = findViewById(R.id.recycler_view_orders);
+        RecyclerView recyclerView = findViewById(R.id.recycler_view_orders);
 
         // This makes the list scroll horizontally (left-to-right)
         LinearLayoutManager layoutManager = new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false);
