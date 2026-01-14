@@ -1,18 +1,15 @@
-//edited after feature/UI2
 plugins {
     alias(libs.plugins.android.application)
 }
 
 android {
     namespace = "com.miun.restaurantchefapp"
-    compileSdk {
-        version = release(36)
-    }
+    compileSdk = 36  // ✅ Använd API 36
 
     defaultConfig {
         applicationId = "com.miun.restaurantchefapp"
         minSdk = 24
-        targetSdk = 36
+        targetSdk = 36  // ✅ API 36
         versionCode = 1
         versionName = "1.0"
 
@@ -29,7 +26,6 @@ android {
         }
     }
     compileOptions {
-        // ENABLE THESE 3 LINES:
         isCoreLibraryDesugaringEnabled = true
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
@@ -42,8 +38,8 @@ dependencies {
     implementation(libs.material)
     implementation(libs.activity)
     implementation(libs.constraintlayout)
-
-    // Gson for JSON parsing
+    implementation("com.squareup.retrofit2:retrofit:2.9.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
     implementation("com.google.code.gson:gson:2.10.1")
 
     testImplementation(libs.junit)

@@ -1,4 +1,3 @@
-//he Adapter is the engine that powers the RecyclerView
 package com.miun.restaurantchefapp;
 
 import android.graphics.Color;
@@ -9,12 +8,15 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.miun.restaurantchefapp.models.Dish;
 import com.miun.restaurantchefapp.models.PrioritizedDish;
+import com.miun.restaurantchefapp.network.ApiCallback;
+import com.miun.restaurantchefapp.network.ApiRepository;
 import com.miun.restaurantchefapp.scheduling.DishPriorityScheduler;
 
 import java.time.LocalDateTime;
@@ -24,9 +26,11 @@ import java.util.List;
 public class KitchenOrderAdapter extends RecyclerView.Adapter<KitchenOrderAdapter.OrderViewHolder> {
 
     private final List<PrioritizedDish> prioritizedDishes;
+    private final ApiRepository repository;
 
     public KitchenOrderAdapter(List<PrioritizedDish> prioritizedDishes) {
         this.prioritizedDishes = new ArrayList<>(prioritizedDishes);
+        this.repository = new ApiRepository();
     }
 
     public void updateData(List<PrioritizedDish> newDishes) {
@@ -82,19 +86,42 @@ public class KitchenOrderAdapter extends RecyclerView.Adapter<KitchenOrderAdapte
 
         holder.tvInstructions.setText(details.toString());
 
-        // 5. Handle Done Button
+        // 5. Handle Done Button - NOW WITH API CALL
         holder.btnDone.setOnClickListener(v -> {
-            dish.setDone(true);
-            int currentPos = holder.getAdapterPosition();
-            if (currentPos != RecyclerView.NO_POSITION) {
-                prioritizedDishes.remove(currentPos);
-                notifyItemRemoved(currentPos);
-            }
+            int bundleId = item.getParentBundle().getID();
+
+            // Disable button to prevent multiple clicks
+            holder.btnDone.setEnabled(false);
+            holder.btnDone.setText("Sparar...");
+
+            // Call API to mark order as complete
+            repository.markOrderComplete(bundleId, new ApiCallback<Void>() {
+                @Override
+                public void onSuccess(Void result) {
+                    // Update local state
+                    dish.setDone(true);
+                    int currentPos = holder.getAdapterPosition();
+                    if (currentPos != RecyclerView.NO_POSITION) {
+                        prioritizedDishes.remove(currentPos);
+                        notifyItemRemoved(currentPos);
+                    }
+
+                    Toast.makeText(v.getContext(), "Order markerad som klar!", Toast.LENGTH_SHORT).show();
+                }
+
+                @Override
+                public void onError(String errorMessage) {
+                    // Re-enable button on error
+                    holder.btnDone.setEnabled(true);
+                    holder.btnDone.setText("DONE");
+
+                    Toast.makeText(v.getContext(), "Fel: " + errorMessage, Toast.LENGTH_SHORT).show();
+                }
+            });
         });
     }
 
-
-     //Generates a unique color for a given table ID so all items
+    // Generates a unique color for a given table ID so all items
     private void applyTableColor(OrderViewHolder holder, int tableId) {
         // Use a Golden Angle approximation to generate distinct colors for numbers 1, 2, 3...
         // This ensures Table 1 is always one color, Table 2 another, etc.
