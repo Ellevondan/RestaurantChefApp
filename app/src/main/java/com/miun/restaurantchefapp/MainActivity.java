@@ -10,9 +10,11 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.miun.restaurantchefapp.models.Dish;
 import com.miun.restaurantchefapp.models.OrderBundle;
 import com.miun.restaurantchefapp.models.PrioritizedDish;
 import com.miun.restaurantchefapp.network.ApiRepository;
+import com.miun.restaurantchefapp.network.MenuRepository;
 import com.miun.restaurantchefapp.network.OrderPollingManager;
 import com.miun.restaurantchefapp.scheduling.DishPriorityScheduler;
 
@@ -27,6 +29,7 @@ public class MainActivity extends AppCompatActivity {
     // API components
     private ApiRepository repository;
     private OrderPollingManager pollingManager;
+    private MenuRepository menuRepository;
 
     private final Handler updateHandler = new Handler(Looper.getMainLooper());
     private static final int UPDATE_INTERVAL = 60000; // Update every 1 minute
@@ -53,16 +56,40 @@ public class MainActivity extends AppCompatActivity {
         // 2. Initialize API components
         repository = new ApiRepository();
         pollingManager = new OrderPollingManager(repository);
+        menuRepository = MenuRepository.getInstance();
 
         // 3. Setup adapter with empty list initially
         adapter = new KitchenOrderAdapter(List.of());
         recyclerView.setAdapter(adapter);
 
-        // 4. Start fetching orders from API
+        // 4. Fetch menu first (needed for timing data)
+        fetchMenu();
+
+        // 5. Start fetching orders from API
         startFetchingOrders();
 
-        // 5. Start periodic priority updates
+        // 6. Start periodic priority updates
         startPriorityUpdates();
+    }
+
+    private void fetchMenu() {
+        Toast.makeText(this, "Hämtar meny...", Toast.LENGTH_SHORT).show();
+
+        menuRepository.fetchMenu(new MenuRepository.MenuFetchCallback() {
+            @Override
+            public void onSuccess(int itemCount) {
+                Toast.makeText(MainActivity.this,
+                        "Meny laddad: " + itemCount + " rätter",
+                        Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onError(String errorMessage) {
+                Toast.makeText(MainActivity.this,
+                        "Kunde inte ladda meny: " + errorMessage,
+                        Toast.LENGTH_LONG).show();
+            }
+        });
     }
 
     private void startFetchingOrders() {
@@ -70,6 +97,12 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onOrdersUpdated(List<OrderBundle> orders) {
                 activeBundles = orders;
+
+                // Populate timing information for all dishes from menu cache
+                if (menuRepository.isMenuLoaded()) {
+                    populateTimingForOrders(orders);
+                }
+
                 updatePriorityList();
             }
 
@@ -80,6 +113,28 @@ public class MainActivity extends AppCompatActivity {
                         Toast.LENGTH_SHORT).show();
             }
         });
+    }
+
+    private void populateTimingForOrders(List<OrderBundle> orders) {
+        if (orders == null) return;
+
+        int totalDishes = 0;
+        int populatedDishes = 0;
+
+        for (OrderBundle bundle : orders) {
+            if (bundle.getOrders() != null) {
+                List<Dish> dishes = bundle.getOrders();
+                totalDishes += dishes.size();
+                populatedDishes += menuRepository.populateDishesTiming(dishes);
+            }
+        }
+
+        // Log if there were issues populating timing
+        if (totalDishes > 0 && populatedDishes < totalDishes) {
+            Toast.makeText(this,
+                    "Varning: " + (totalDishes - populatedDishes) + " rätter saknar tidsinformation",
+                    Toast.LENGTH_SHORT).show();
+        }
     }
 
     private void updatePriorityList() {

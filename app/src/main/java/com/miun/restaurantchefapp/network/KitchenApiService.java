@@ -1,5 +1,6 @@
 package com.miun.restaurantchefapp.network;
 
+import com.miun.restaurantchefapp.models.CarteMenuItem;
 import com.miun.restaurantchefapp.models.OrderBundle;
 import java.util.List;
 import retrofit2.Call;
@@ -26,4 +27,11 @@ public interface KitchenApiService {
      */
     @PUT("orders/{id}/reset")
     Call<Void> markOrderComplete(@Path("id") int id);
+
+    /**
+     * Hämtar hela carte-menyn med alla tillgängliga rätter och deras tidsinformation
+     * Detta används för att få activeTime och waitingTime för varje rätt
+     */
+    @GET("carte-menu/active")
+    Call<List<CarteMenuItem>> getActiveCarteMenu();
 }
